@@ -2,11 +2,44 @@
   (:use ring.adapter.jetty)
   (:use ring.handler.dump)
   (:use (ring.middleware reload stacktrace keyword-params params))
-  (:use hiccup.core))
+  (:use (hiccup core form-helpers))
+  (:use orc_battle_online.game_logic))
 
 (def foo-count (ref 0))
 
+(defn show-monsters-html []
+  (html [:pre (with-out-str (show-monsters))]))
+
+(defn show-actions-html []
+  (html [:a {:href "stab"} "Stab"]
+	[:br]))
+
+(defn render-game-html []
+  (html [:div#monsters (show-monsters-html)]
+	[:div#actions (show-actions-html)]))
+
 (defmulti handler :uri)
+(defmethod handler "/newgame" [req]
+	   (init-monsters)
+	   (init-player)
+	   {:status 200
+	    :headers {"Content-type" "text/html"}
+	    :body (render-game-html)})
+
+(defmethod handler "/stab" [req]
+	   {:status 200
+	    :headers {"Content-type" "text/html"}
+	    :body (html (show-monsters-html)
+			(form-to [:post "/stab-monster"]
+				 (label "stab-choice" "Which monster will you stab?")
+				 (text-field "stab-choice")
+				 (submit-button "Submit")))})
+
+(defmethod handler "/stab-monster" [req]
+	   (let [x (:stab-choice (:params req))]
+;	     (if (not (and (integer? x) (>= x 1) (<= x *monster-num*)))
+;	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:h1 "That is not a valid monster type"] (handle-dump req))}
+	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:pre (with-out-str (with-in-str (str "s\r\n" x "\r\n" player-attack)))] (handle-dump req))}))
 
 (defmethod handler "/foo" [req]
 	   {:status 200
@@ -37,8 +70,8 @@
 ;; The refs do appear to be stored in memory, but if we do a
 ;; wrap-reload of the namespace they will be reloaded and so it will appear as though they don't do anything
 (def app (-> handler
-	     (wrap-params)
 	     (wrap-keyword-params)
+	     (wrap-params)
 	     (wrap-reload '(orc_battle_online.core))
 	     (wrap-stacktrace)))
 
