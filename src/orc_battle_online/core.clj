@@ -3,20 +3,9 @@
   (:use ring.handler.dump)
   (:use (ring.middleware reload stacktrace keyword-params params))
   (:use (hiccup core form-helpers))
-  (:use orc_battle_online.game_logic))
+  (:use (orc_battle_online game_logic html_rendering)))
 
 (def foo-count (ref 0))
-
-(defn show-monsters-html []
-  (html [:pre (with-out-str (show-monsters))]))
-
-(defn show-actions-html []
-  (html [:a {:href "stab"} "Stab"]
-	[:br]))
-
-(defn render-game-html []
-  (html [:div#monsters (show-monsters-html)]
-	[:div#actions (show-actions-html)]))
 
 (defmulti handler :uri)
 (defmethod handler "/newgame" [req]
@@ -39,7 +28,7 @@
 	   (let [x (:stab-choice (:params req))]
 ;	     (if (not (and (integer? x) (>= x 1) (<= x *monster-num*)))
 ;	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:h1 "That is not a valid monster type"] (handle-dump req))}
-	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:pre (with-out-str (with-in-str (str "s\r\n" x "\r\n" player-attack)))] (handle-dump req))}))
+	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:pre (with-out-str (with-in-str (str "s\r\n" x "\r\n") (player-attack)))] (handle-dump req))}))
 
 (defmethod handler "/foo" [req]
 	   {:status 200
@@ -49,14 +38,16 @@
 		    [:br]
 		    [:a {:href "/"} "Go back"]])})
 
+(defmethod handler "/bar" [req]
+	   (handler (assoc req :uri "/foo")))
+
 (defmethod handler "/" [req]
 	   (dosync (alter foo-count inc))
 	   {:status 404
 	    :headers {"Content-type" "text/html"}
 	    :body (html
 		   [:h1 "Hello World from Ring and Hiccup!"]
-		   [:p (str req)]
-		   [:a {:href "foo"} "Page foo"]
+		   [:a {:href "newgame"} "New Game"]
 		   [:p (str "Count =" @foo-count)])})
 
 (defmethod handler :default [req]
