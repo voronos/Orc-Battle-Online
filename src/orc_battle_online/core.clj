@@ -1,58 +1,43 @@
 (ns orc_battle_online.core
   (:use ring.adapter.jetty)
   (:use ring.handler.dump)
-  (:use (ring.middleware reload stacktrace keyword-params params))
+  (:use (ring.middleware flash reload stacktrace keyword-params params session))
   (:use ring.util.response)
   (:use (hiccup core form-helpers))
   (:use (orc_battle_online game_logic html_rendering)))
 
-(def foo-count (ref 0))
+(defn response-html [body]
+  (-> (response body)
+      (content-type "text/html")))
 
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
-	   {:status 200
-	    :headers {"Content-type" "text/html"}
-	    :body (render-game-html)})
+	   (response-html (str (render-game-html req))))
 
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
 	   (init-player)
-	   (handler (assoc req :uri "/main")))
+	   (redirect "/main"))
 
 (defmethod handler "/stab" [req]
-	   {:status 200
-	    :headers {"Content-type" "text/html"}
-	    :body (html (show-monsters-html)
-			(form-to [:post "/stab-monster"]
-				 (label "stab-choice" "Which monster will you stab?")
-				 (text-field "stab-choice")
-				 (submit-button "Submit")))})
+	   (response-html (html (show-monsters-html)
+			       (form-to [:post "/stab-monster"]
+					(label "stab-choice" "Which monster will you stab?")
+					(text-field "stab-choice")
+					(submit-button "Submit")))))
 
+; TODO add flash to spell out the result of the action
 (defmethod handler "/stab-monster" [req]
 	   (let [x (:stab-choice (:params req))]
 	     (with-in-str (str "s\r\n" x "\r\n") (player-attack))
-	     (redirect "/main")))
-
-(defmethod handler "/foo" [req]
-	   {:status 200
-	    :headers {"Content-type" "text/html"}
-	    :body (html
-		   [:p "Page foo"
-		    [:br]
-		    [:a {:href "/"} "Go back"]])})
-
-(defmethod handler "/bar" [req]
-	   (handler (assoc req :uri "/foo")))
+	     (-> (redirect "/main")
+		 (assoc :session {:_flash (str "You stabbed monster " x)})
+		 (assoc :flash "Success!"))))
 
 (defmethod handler "/" [req]
-	   (dosync (alter foo-count inc))
-	   {:status 404
-	    :headers {"Content-type" "text/html"}
-	    :body (html
-		   [:h1 "Hello World from Ring and Hiccup!"]
-		   [:a {:href "newgame"} "New Game"]
-		   [:p (str "Count =" @foo-count)])})
+	   (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
+				[:a {:href "newgame"} "New Game"])))
 
 (defmethod handler :default [req]
 	   (handle-dump req))
@@ -62,11 +47,11 @@
 ;; form requests.  I wonder if the hashmap is stored in memory, so
 ;; we can have some kind of state
 
-;; The refs do appear to be stored in memory, but if we do a
-;; wrap-reload of the namespace they will be reloaded and so it will appear as though they don't do anything
 (def app (-> handler
+	     (wrap-session)
 	     (wrap-keyword-params)
 	     (wrap-params)
+	     (wrap-flash)
 	     (wrap-reload '(orc_battle_online.core))
 	     (wrap-stacktrace)))
 
