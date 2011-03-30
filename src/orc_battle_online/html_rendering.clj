@@ -2,9 +2,10 @@
   (:use orc_battle_online.game_logic)
   (:use (hiccup core)))
 
-(defmulti monster-show-html :type)
-(defmethod monster-show-html :default [m]
-	   (str "Health=" (:health m) ": A fierce " (:type m) " monster"))
+(defn monster-show-html [m]
+  (str (with-out-str (monster-show m)) " (Health: " (:health m) ")"))
+;(defmethod monster-show-html :default [m]
+;	   (str "Health=" (:health m) ": A fierce " (:type m) " monster"))
 
 (defn show-monsters-html []
   (html [:ol (map (fn [i m]

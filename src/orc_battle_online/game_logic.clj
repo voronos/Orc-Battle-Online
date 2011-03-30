@@ -93,6 +93,7 @@
   (print "Monster #:")
   (flush)
   (let [x (read)]
+    (println)
     (pick-monster-result x)))
 
 (defmethod monster-hit :default [m x]
@@ -166,7 +167,8 @@
 			 (monster-hit (pick-monster) x)))
        true (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
 	      (if-not (monsters-dead)
-		(monster-hit (random-monster) 1)))))))
+		(monster-hit (random-monster) 1))))))
+  (println))
 
 (defn game-loop []
   (when-not (or (player-dead) (monsters-dead))

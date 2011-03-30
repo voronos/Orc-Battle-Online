@@ -2,18 +2,23 @@
   (:use ring.adapter.jetty)
   (:use ring.handler.dump)
   (:use (ring.middleware reload stacktrace keyword-params params))
+  (:use ring.util.response)
   (:use (hiccup core form-helpers))
   (:use (orc_battle_online game_logic html_rendering)))
 
 (def foo-count (ref 0))
 
 (defmulti handler :uri)
-(defmethod handler "/newgame" [req]
-	   (init-monsters)
-	   (init-player)
+
+(defmethod handler "/main" [req]
 	   {:status 200
 	    :headers {"Content-type" "text/html"}
 	    :body (render-game-html)})
+
+(defmethod handler "/newgame" [req]
+	   (init-monsters)
+	   (init-player)
+	   (handler (assoc req :uri "/main")))
 
 (defmethod handler "/stab" [req]
 	   {:status 200
@@ -26,9 +31,8 @@
 
 (defmethod handler "/stab-monster" [req]
 	   (let [x (:stab-choice (:params req))]
-;	     (if (not (and (integer? x) (>= x 1) (<= x *monster-num*)))
-;	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:h1 "That is not a valid monster type"] (handle-dump req))}
-	       {:status 200 :headers {"Content-type" "text/html"} :body (html [:pre (with-out-str (with-in-str (str "s\r\n" x "\r\n") (player-attack)))] (handle-dump req))}))
+	     (with-in-str (str "s\r\n" x "\r\n") (player-attack))
+	     (redirect "/main")))
 
 (defmethod handler "/foo" [req]
 	   {:status 200
