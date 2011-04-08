@@ -1,10 +1,12 @@
 # orc_battle_online
 
-FIXME: write description
+This is a learning project for me. The goal is to take the Orc Battle game from Land of Lisp, translating it to Clojure and putting it online with Ring
 
 ## Usage
 
-FIXME: write
+Assuming you have leiningen setup, run 
+$ lein deps
+$ lein ring server
 
 ## License
 
