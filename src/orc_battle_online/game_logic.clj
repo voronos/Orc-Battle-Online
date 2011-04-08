@@ -183,6 +183,8 @@
       (or (monster-dead m) (monster-attack m)))
     (recur)))
 
+; TODO this needs quite a bit of rework to work well with Ring and not just the console
+; I wonder if we could devise a method of passing in functions to the player-attack function to handle getting a result?
 (defn orc-battle []
   (init-monsters)
   (init-player)

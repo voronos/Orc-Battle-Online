@@ -14,7 +14,10 @@
 
 (defn show-actions-html []
   (html [:a {:href "stab"} "Stab"]
-	[:br]))
+	[:br]
+	[:a {:href "roundhouse"} "Roundhouse"]
+	[:br]
+	[:a {:href "choose-double-swing-target"} "Double swing"]))
 
 (defn show-player-html []
   (html [:p
@@ -24,8 +27,8 @@
 
 (defn render-game-html [req]
   (html4 [:body
-	  (if (:flash req) [:div#flash (:flash req)])
-	  (if (get-in req [:session :_flash]) [:div#_flash (get-in req [:session :_flash])])
+	  (if (:flash req) [:div#flash [:pre (:flash req)]])
+	  ;(if (get-in req [:session :_flash]) [:div#_flash (get-in req [:session :_flash])])
 	  [:div#player (show-player-html)]
 	  [:div#monsters (show-monsters-html)]
 	  [:div#actions (show-actions-html)]]))
