@@ -7,3 +7,6 @@
   (dosync
    (alter *link-map* assoc (hash fun) fun)
    (html [:a {:href (hash fun)} text])))
+
+(defn follow-link [request-map]
+  ((get @*link-map* (Integer/parseInt (apply str (rest (:uri request-map))))) request-map))

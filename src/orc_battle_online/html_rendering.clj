@@ -1,6 +1,11 @@
 (ns orc_battle_online.html_rendering
-  (:use orc_battle_online.game_logic)
-  (:use (hiccup core page-helpers)))
+  (:use (orc_battle_online game_logic stateful_links))
+  (:use (ring.util response))
+  (:use (hiccup core page-helpers form-helpers)))
+
+(defn response-html [body]
+  (-> (response body)
+      (content-type "text/html")))
 
 (defn monster-show-html [m]
   (str (with-out-str (monster-show m)) " (Health: " (:health m) ")"))
@@ -13,7 +18,22 @@
        @*monsters*))))
 
 (defn show-actions-html []
-  (html [:a {:href "stab"} "Stab"]
+  (html (create-link "Stab"
+		     (fn [req]
+		       (response-html
+			(html
+			 (ordered-list
+			  (map
+			   #(str (monster-show-html %1)
+				 (create-link "Stab this monster"
+					      (fn [req]
+						(let [in-str (str "s\r\n" %2 "\r\n")]
+						  (println "in-str =" in-str)
+						  (with-in-str in-str (player-attack))
+						  (-> (redirect "/main")
+						      (assoc :flash (str "You stabbed monster " %2)))))))
+				 @*monsters*
+				 (iterate inc 1)))))))
 	[:br]
 	[:a {:href "roundhouse"} "Roundhouse"]
 	[:br]

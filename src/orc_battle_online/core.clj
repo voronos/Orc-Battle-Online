@@ -7,10 +7,6 @@
   (:use (hiccup core form-helpers))
   (:use (orc_battle_online game_logic html_rendering stateful_links)))
 
-(defn response-html [body]
-  (-> (response body)
-      (content-type "text/html")))
-
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
@@ -60,7 +56,6 @@
 	   (let [x (:stab-choice (:params req))]
 	     (with-in-str (str "s\r\n" x "\r\n") (player-attack))
 	     (-> (redirect "/main")
-		 ;(assoc :session {:_flash (str "You stabbed monster " x)})
 		 (assoc :flash (str "You stabbed monster " x)))))
 
 (defmethod handler "/" [req]
@@ -68,7 +63,7 @@
 				[:a {:href "newgame"} "New Game"])))
 
 (defmethod handler :default [req]
-	   ((get @*link-map* (Integer/parseInt (apply str (rest (:uri req))))) req))
+	   (follow-link req))
 
 (def app (-> handler
 	     (wrap-flash)
