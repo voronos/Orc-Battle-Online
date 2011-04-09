@@ -10,34 +10,74 @@
 (defn monster-show-html [m]
   (str (with-out-str (monster-show m)) " (Health: " (:health m) ")"))
 
+(defn monster-show-with-attack [m fun]
+  (if (monster-dead m)
+    "*dead*"
+    (create-link (monster-show-html m) fun)))
+
 (defn show-monsters-html []
   (html (ordered-list (map (fn [m]
-	 (if (monster-dead m)
-	   "*dead*"
-	   (monster-show-html m)))
-       @*monsters*))))
+			     (if (monster-dead m)
+			       "*dead*"
+			       (monster-show-html m)))
+			   @*monsters*))))
+
+(defn map-monsters-with-index [fun]
+  (map fun @*monsters* (iterate inc 1)))
+
+(def stab-link
+     (create-link "Stab"
+		  (fn [req]
+		    (response-html
+		     (html [:p "Which monster will you stab?"]
+			   (ordered-list
+			    (map-monsters-with-index
+			      #(monster-show-with-attack %1 
+				 (fn [req]
+				   (let [in-str (str "s\r\n" %2 "\r\n")]
+				     (println "in-str =" in-str)
+				     (with-in-str in-str (player-attack))
+				     (-> (redirect "/main")
+					 (assoc :flash (str "You stabbed monster " %2)))))))))))))
+
+(def roundhouse-link
+     (create-link "Roundhouse"
+		  (fn [req]
+		    (let [output (with-out-str (with-in-str "r\r\n" (player-attack)))]
+		      (-> (redirect "/main")
+			  (assoc :flash output))))))
+
+(defn second-double-swing-choice [first-i m i]
+  (monster-show-with-attack m
+    (fn [req]
+      (let [in-str (str "d\r\n" first-i "\r\n" i)]
+	(with-in-str in-str (player-attack))
+	(-> (redirect "/main")
+	    (assoc :flash in-str))))))
+
+(defn first-double-swing-choice [m i]
+  (monster-show-with-attack m
+    (fn [req]
+      (response-html
+       (html [:p "Which monster will you hit second?"]
+	     (ordered-list (map-monsters-with-index (partial second-double-swing-choice i))))))))
+
+(def double-swing-link
+     (create-link "Double swing"
+		  (fn [req]
+		    (response-html
+		     (html [:p "Which monster will you hit first?"]
+			   (ordered-list
+			    (map-monsters-with-index first-double-swing-choice)))))))
 
 (defn show-actions-html []
-  (html (create-link "Stab"
-		     (fn [req]
-		       (response-html
-			(html
-			 (ordered-list
-			  (map
-			   #(str (monster-show-html %1)
-				 (create-link "Stab this monster"
-					      (fn [req]
-						(let [in-str (str "s\r\n" %2 "\r\n")]
-						  (println "in-str =" in-str)
-						  (with-in-str in-str (player-attack))
-						  (-> (redirect "/main")
-						      (assoc :flash (str "You stabbed monster " %2)))))))
-				 @*monsters*
-				 (iterate inc 1)))))))
+  (html stab-link
 	[:br]
-	[:a {:href "roundhouse"} "Roundhouse"]
+	roundhouse-link
 	[:br]
-	[:a {:href "choose-double-swing-target"} "Double swing"]))
+	double-swing-link
+	[:br]
+	[:a {:href "/newgame"} "New Game"]))
 
 (defn show-player-html []
   (html [:p
