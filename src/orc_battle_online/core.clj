@@ -76,7 +76,7 @@
 (defn boot []
   (init-monsters)
   (init-player)
-  (run-jetty app {:port 8080}))
+  (run-jetty app {:port 8000}))
 
 (defn -main [&args]
   (boot))
