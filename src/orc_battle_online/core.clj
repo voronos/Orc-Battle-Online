@@ -5,7 +5,7 @@
   (:use (ring.middleware.session memory))
   (:use ring.util.response)
   (:use (hiccup core form-helpers))
-  (:use (orc_battle_online game_logic html_rendering)))
+  (:use (orc_battle_online game_logic html_rendering stateful_links)))
 
 (defn response-html [body]
   (-> (response body)
@@ -14,7 +14,10 @@
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
-	   (response-html (str (render-game-html req))))
+	   (response-html (str (render-game-html req)
+			       (create-link "Random Fun"
+					    (fn [req]
+					      (response-html "Congrats! You have called a method"))))))
 
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
@@ -65,7 +68,7 @@
 				[:a {:href "newgame"} "New Game"])))
 
 (defmethod handler :default [req]
-	   (handle-dump req))
+	   ((get @*link-map* (Integer/parseInt (apply str (rest (:uri req))))) req))
 
 (def app (-> handler
 	     (wrap-flash)
@@ -76,6 +79,8 @@
 	     (wrap-stacktrace)))
 
 (defn boot []
+  (init-monsters)
+  (init-player)
   (run-jetty app {:port 8080}))
 
 (defn -main [&args]
