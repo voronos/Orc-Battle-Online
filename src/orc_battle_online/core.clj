@@ -7,10 +7,12 @@
   (:use (hiccup core form-helpers))
   (:use (orc_battle_online game_logic html_rendering stateful_links)))
 
+(def *turn-counter* (atom 1))
+
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
-	   (response-html (str (render-game-html req)
+	   (response-html (str (render-game-html req @*turn-counter*)
 			       (create-link "Random Fun"
 					    (fn [req]
 					      (response-html "Congrats! You have called a method"))))))
@@ -18,6 +20,7 @@
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
 	   (init-player)
+	   (reset! *turn-counter* 0)
 	   (redirect "/main"))
 
 (defmethod handler "/" [req]
@@ -25,7 +28,11 @@
 				[:a {:href "newgame"} "New Game"])))
 
 (defmethod handler :default [req]
-	   (follow-link req))
+  (swap! *turn-counter* inc)
+  (if (= 0 (mod @*turn-counter* 3))
+    (doseq [m @*monsters*]
+      (or (monster-dead m) (monster-attack m))))
+  (follow-link req))
 
 (def app (-> handler
 	     (wrap-flash)

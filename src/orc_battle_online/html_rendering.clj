@@ -79,16 +79,17 @@
 	[:br]
 	[:a {:href "/newgame"} "New Game"]))
 
-(defn show-player-html []
-  (html [:p
+(defn show-player-html [turn-number]
+  (html [:p (str "Turn " turn-number)]
+        [:p
 	 (str "You are a valiant knight with a health of " @*player-health*
 	      ", an agility of " @*player-agility*
 	      ", and a strength of " @*player-strength*)]))
 
-(defn render-game-html [req]
+(defn render-game-html [req turn-number]
   (html4 [:body
 	  (if (:flash req) [:div#flash [:pre (:flash req)]])
 	  ;(if (get-in req [:session :_flash]) [:div#_flash (get-in req [:session :_flash])])
-	  [:div#player (show-player-html)]
+	  [:div#player (show-player-html turn-number)]
 	  [:div#monsters (show-monsters-html)]
 	  [:div#actions (show-actions-html)]]))

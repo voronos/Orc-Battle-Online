@@ -10,4 +10,5 @@
    (html [:a {:href (hash fun)} text])))
 
 (defn follow-link [request-map]
-  ((get @*link-map* (Integer/parseInt (apply str (rest (:uri request-map))))) request-map))
+  (let [hash-id (apply str (rest (:uri request-map)))]
+    ((get @*link-map* (Integer/parseInt hash-id)) request-map)))
