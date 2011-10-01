@@ -5,67 +5,34 @@
   (:use (ring.middleware.session memory))
   (:use ring.util.response)
   (:use (hiccup core form-helpers))
-  (:use (orc_battle_online game_logic html_rendering)))
+  (:use (orc_battle_online game_logic html_rendering stateful_links)))
 
-(defn response-html [body]
-  (-> (response body)
-      (content-type "text/html")))
+(def *turn-counter* (atom 1))
 
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
-	   (response-html (str (render-game-html req))))
+	   (response-html (str (render-game-html req @*turn-counter*)
+			       (create-link "Random Fun"
+					    (fn [req]
+					      (response-html "Congrats! You have called a method"))))))
 
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
 	   (init-player)
+	   (reset! *turn-counter* 0)
 	   (redirect "/main"))
-
-(defmethod handler "/roundhouse" [req]
-	   (let [output (with-out-str (with-in-str (str "r\r\n") (player-attack)))]
-	   (-> (redirect "/main")
-	       (assoc :flash output))))
-
-(defmethod handler "/choose-double-swing-target" [req]
-	   (response-html (html (show-monsters-html)
-				(form-to [:post "/double-swing-attack"]
-					 (label "target-one" "Monster #1")
-					 (text-field "target-one")
-					 (label "target-two" "Monster #2")
-					 (text-field "target-two")
-					 (submit-button "Submit")))))
-
-(defmethod handler "/double-swing-attack" [req]
-	   (let [output (with-out-str (with-in-str (str "d\r\n"
-							(:target-one (:params req))
-							"\r\n"
-							(:target-two (:params req))
-							"\r\n") (player-attack)))]
-	     (-> (redirect "/main")
-		 (assoc :flash output))))
-	     
-
-(defmethod handler "/stab" [req]
-	   (response-html (html (show-monsters-html)
-			       (form-to [:post "/stab-monster"]
-					(label "stab-choice" "Which monster will you stab?")
-					(text-field "stab-choice")
-					(submit-button "Submit")))))
-
-
-(defmethod handler "/stab-monster" [req]
-	   (let [x (:stab-choice (:params req))]
-	     (with-in-str (str "s\r\n" x "\r\n") (player-attack))
-	     (-> (redirect "/main")
-		 ;(assoc :session {:_flash (str "You stabbed monster " x)})
-		 (assoc :flash (str "You stabbed monster " x)))))
 
 (defmethod handler "/" [req]
 	   (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
 				[:a {:href "newgame"} "New Game"])))
 
 (defmethod handler :default [req]
-	   (handle-dump req))
+  (swap! *turn-counter* inc)
+  (if (= 0 (mod @*turn-counter* 3))
+    (doseq [m @*monsters*]
+      (or (monster-dead m) (monster-attack m))))
+  (follow-link req))
 
 (def app (-> handler
 	     (wrap-flash)
@@ -76,7 +43,9 @@
 	     (wrap-stacktrace)))
 
 (defn boot []
-  (run-jetty app {:port 8080}))
+  (init-monsters)
+  (init-player)
+  (run-jetty app {:port 8000}))
 
 (defn -main [&args]
   (boot))
