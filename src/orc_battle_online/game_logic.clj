@@ -3,14 +3,13 @@
 (defmulti monster-hit (fn [i-m-pair amount] (:type (fnext i-m-pair))))
 (defmulti monster-show :type)
 (defmulti monster-attack :type)
+(def *turn-counter* (atom 1))
 
 (defn randval [n]
   (+ 1 (rand-int (max 1 n))))
 
 (defstruct monster :health :type)
 (defn make-monster [type] (struct monster (randval 10) type))
-;(defn make-monster []
-;  (struct monster (randval 10) nil))
 (defn make-orc []
   (assoc (make-monster 'orc) :club-level (randval 8)))
 (defn make-hydra []

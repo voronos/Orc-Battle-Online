@@ -7,8 +7,6 @@
   (:use (hiccup core form-helpers))
   (:use (orc_battle_online game_logic html_rendering stateful_links)))
 
-(def *turn-counter* (atom 1))
-
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
