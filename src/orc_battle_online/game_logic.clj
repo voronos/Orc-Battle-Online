@@ -150,6 +150,9 @@
 	      (= x @*player-agility*) (do (print "A brigand catches your leg with his whip, taking off 2 agility points! ") (swap! *player-agility* - 2))
 	      (= x @*player-strength*) (do (print "A brigand cuts your arm with his whip, taking off 2 strength points! ") (swap! *player-strength* - 2)))))
 
+(defn stab-monster [monster-num]
+  (monster-hit monster-num (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
+
 (defn player-attack []
   (do
     (println)
@@ -158,7 +161,7 @@
   (let [attack (read)]
     (do
       (cond
-       (= 's attack) (monster-hit (pick-monster) (+ 2 (randval (bit-shift-left @*player-strength* -1))))
+       (= 's attack) (stab-monster (pick-monster))
        (= 'd attack) (let [x (randval (int (/ @*player-strength* 6)))]
 		       (println "Your double swing has a strength of" x)
 		       (monster-hit (pick-monster) x)
@@ -192,3 +195,5 @@
     (println "You have been killed. Game Over."))
   (when (monsters-dead)
     (println "Congratulations! You have vanquished all of your foes.")))
+
+(defn -main [] (orc-battle))

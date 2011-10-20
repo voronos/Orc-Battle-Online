@@ -5,5 +5,5 @@
 		 [ring "0.3.7"]
 		 [hiccup "0.3.4"]]
   :dev-dependencies [[lein-ring "0.4.0"]]
-  :main orc_battle_online.core
+  :main orc_battle_online.game_logic
   :ring {:handler orc_battle_online.core/app})

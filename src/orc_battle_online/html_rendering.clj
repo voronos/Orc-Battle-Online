@@ -26,19 +26,19 @@
   (map fun @*monsters* (iterate inc 1)))
 
 (def stab-link
-     (create-link "Stab"
-		  (fn [req]
-		    (response-html
-		     (html [:p "Which monster will you stab?"]
-			   (ordered-list
-			    (map-monsters-with-index
-			      #(monster-show-with-attack %1 
-				 (fn [req]
-				   (let [in-str (str "s\r\n" %2 "\r\n")]
-				     (println "in-str =" in-str)
-				     (with-in-str in-str (player-attack))
-				     (-> (redirect "/main")
-					 (assoc :flash (str "You stabbed monster " %2)))))))))))))
+  (create-link "Stab"
+               (fn [req]
+                 (response-html
+                  (html [:p "Which monster will you stab?"]
+                        (ordered-list
+                         (map-monsters-with-index
+                           #(monster-show-with-attack %1 
+                              (fn [req]
+                                (let [in-str (str "s\r\n" %2 "\r\n")]
+                                  (println "in-str =" in-str)
+                                  (with-in-str in-str (player-attack))
+                                  (-> (redirect "/main")
+                                      (assoc :flash (str "You stabbed monster " %2)))))))))))))
 
 (def roundhouse-link
      (create-link "Roundhouse"
@@ -89,7 +89,6 @@
 (defn render-game-html [req turn-number]
   (html4 [:body
 	  (if (:flash req) [:div#flash [:pre (:flash req)]])
-	  ;(if (get-in req [:session :_flash]) [:div#_flash (get-in req [:session :_flash])])
 	  [:div#player (show-player-html turn-number)]
 	  [:div#monsters (show-monsters-html)]
 	  [:div#actions (show-actions-html)]]))

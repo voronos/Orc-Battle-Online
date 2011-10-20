@@ -24,6 +24,12 @@
 (defmethod handler "/" [req]
 	   (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
 				[:a {:href "newgame"} "New Game"])))
+;;; TODO this is not quite
+;;; right. the turn should not
+;;; be incremented for each
+;;; link, only each complete
+;;; action
+;;;
 
 (defmethod handler :default [req]
   (swap! *turn-counter* inc)
@@ -43,7 +49,7 @@
 (defn boot []
   (init-monsters)
   (init-player)
-  (run-jetty app {:port 8000}))
+  (run-jetty app {:port 8000 :join? false}))
 
-(defn -main [&args]
+(defn -main [& args]
   (boot))
