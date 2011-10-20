@@ -82,10 +82,10 @@
 (defn pick-monster-result [x]
   (if (not (and (integer? x) (>= x 1) (<= x *monster-num*)))
     (do (print "That is not a valid monster number.") (pick-monster))
-    (let [m (get @*monsters* (- x 1))]
+    (let [m (get @*monsters* (dec x))]
       (if (monster-dead m)
 	(do (print "That monster is already dead.") (pick-monster))
-	[(- x 1) m]))))
+	[(dec x) m]))))
 
 (defn pick-monster []
   (println)
@@ -151,7 +151,7 @@
 	      (= x @*player-strength*) (do (print "A brigand cuts your arm with his whip, taking off 2 strength points! ") (swap! *player-strength* - 2)))))
 
 (defn stab-monster [monster-num]
-  (monster-hit monster-num (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
+  (monster-hit (pick-monster-result monster-num) (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
 
 (defn player-attack []
   (do
