@@ -10,10 +10,10 @@
 (defn monster-show-html [m]
   (str (with-out-str (monster-show m)) " (Health: " (:health m) ")"))
 
-(defn monster-show-with-attack [m fun]
+(defn monster-show-with-attack [m attack-fun]
   (if (monster-dead m)
     "*dead*"
-    (create-link (monster-show-html m) fun)))
+    (create-link (monster-show-html m) attack-fun)))
 
 (defn show-monsters-html []
   (html (ordered-list (map (fn [m]
@@ -32,13 +32,11 @@
                   (html [:p "Which monster will you stab?"]
                         (ordered-list
                          (map-monsters-with-index
-                           #(monster-show-with-attack %1 
-                              (fn [req]
-                                (let [in-str (str "s\r\n" %2 "\r\n")]
-                                  (println "in-str =" in-str)
-                                  (with-in-str in-str (player-attack))
-                                  (-> (redirect "/main")
-                                      (assoc :flash (str "You stabbed monster " %2)))))))))))))
+                           (fn [m i] (monster-show-with-attack m
+                                       (fn [req]
+                                         (stab-monster [(dec i) m])
+                                         (-> (redirect "/main")
+                                             (assoc :flash (str "You stabbed monster " i)))))))))))))
 
 (def roundhouse-link
      (create-link "Roundhouse"

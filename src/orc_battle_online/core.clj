@@ -5,7 +5,8 @@
   (:use (ring.middleware.session memory))
   (:use ring.util.response)
   (:use (hiccup core form-helpers))
-  (:use (orc_battle_online game_logic html_rendering stateful_links)))
+  (:use (orc_battle_online [game_logic :exclude [-main]]))
+  (:use (orc_battle_online html_rendering stateful_links)))
 
 (defmulti handler :uri)
 

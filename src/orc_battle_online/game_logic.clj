@@ -150,13 +150,12 @@
 	      (= x @*player-agility*) (do (print "A brigand catches your leg with his whip, taking off 2 agility points! ") (swap! *player-agility* - 2))
 	      (= x @*player-strength*) (do (print "A brigand cuts your arm with his whip, taking off 2 strength points! ") (swap! *player-strength* - 2)))))
 
-(defn stab-monster [monster-num]
-  (monster-hit (pick-monster-result monster-num) (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
+(defn stab-monster [i-m-pair]
+  (monster-hit i-m-pair (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
 
 (defn double-swing-attack []
   (let [attack-strength (randval (int (/ @*player-strength* 6)))]
     [attack-strength
-     (fn [monster-num] (monster-hit (pick-monster-result monster-num) attack-strength))
      (fn [monster-num] (monster-hit (pick-monster-result monster-num) attack-strength))]))
 
 (defn player-attack []
@@ -167,11 +166,11 @@
   (let [attack (read)]
     (do
       (cond
-       (= 's attack) (stab-monster (read))
-       (= 'd attack) (let [[x fun1 fun2] (double-swing-attack)]
+       (= 's attack) (stab-monster (pick-monster))
+       (= 'd attack) (let [[x attack-fun] (double-swing-attack)]
                        (println "Your double swing has a strength of" x)
-                       (fun1 (pick-monster)) ;calling pick-monster here has interesting consequences when pick-monster-result is called later. What is the best way to get the monster num?
-                       (if-not (monsters-dead) (fun2 (pick-monster))))
+                       (attack-fun (pick-monster)) ;calling pick-monster here has interesting consequences when pick-monster-result is called later. What is the best way to get the monster num?
+                       (if-not (monsters-dead) (attack-fun (pick-monster))))
        true (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
 	      (if-not (monsters-dead)
 		(monster-hit (random-monster) 1))))))
