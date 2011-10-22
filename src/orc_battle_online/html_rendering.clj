@@ -56,9 +56,11 @@
   (monster-show-with-attack m
     (fn [req]
       (attack-fun [(dec i) m])
-      (response-html
-       (html [:p "You hit monster " i ". Which monster will you hit second?"]
-	     (ordered-list (map-monsters-with-index (partial second-double-swing-choice attack-fun))))))))
+      (if (monsters-dead)
+        (-> (redirect "/main") (assoc :flash "No monsters left alive"))
+        (response-html
+         (html [:p "You hit monster " i ". Which monster will you hit second?"]
+               (ordered-list (map-monsters-with-index (partial second-double-swing-choice attack-fun)))))))))
 
 (def double-swing-link
   (create-link "Double swing"
