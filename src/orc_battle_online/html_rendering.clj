@@ -26,51 +26,53 @@
   (map fun @*monsters* (iterate inc 1)))
 
 (def stab-link
-  (create-link "Stab"
-               (fn [req]
-                 (response-html
-                  (html [:p "Which monster will you stab?"]
-                        (ordered-list
-                         (map-monsters-with-index
-                           (fn [m i] (monster-show-with-attack m
-                                       (fn [req]
-                                         (stab-monster [(dec i) m])
-                                         (-> (redirect "/main")
-                                             (assoc :flash (str "You stabbed monster " i)))))))))))))
+  (create-link
+   "Stab"
+   (fn [req]
+     (response-html
+      (html [:p "Which monster will you stab?"]
+            (ordered-list
+             (map-monsters-with-index
+               (fn [m i]
+                 (monster-show-with-attack m
+                   (fn [req]                             
+                     (-> (redirect "/main")
+                         (assoc :flash (stab-monster [(dec i) m])))))))))))))
 
 (def roundhouse-link
      (create-link "Roundhouse"
 		  (fn [req]
-		    (let [output (with-out-str (roundhouse-attack))]
-		      (-> (redirect "/main")
-			  (assoc :flash output))))))
+                    (-> (redirect "/main")
+                        (assoc :flash (.replaceAll (roundhouse-attack) "\n" "<br/>"))))))
 
 (defn second-double-swing-choice [attack-fun m i]
   (monster-show-with-attack m
     (fn [req]
-      (attack-fun [(dec i) m])
-      (-> (redirect "/main")
-          (assoc :flash (str "You hit monster " i))))))
+      (let [attack-result (attack-fun [(dec i) m])]
+        (-> (redirect "/main")
+            (assoc :flash attack-result))))))
 
-(defn first-double-swing-choice [attack-fun m i]
+(defn first-double-swing-choice [attack-fun strength m i]
   (monster-show-with-attack m
     (fn [req]
-      (attack-fun [(dec i) m])
-      (if (monsters-dead)
-        (-> (redirect "/main") (assoc :flash "No monsters left alive"))
-        (response-html
-         (html [:p "You hit monster " i ". Which monster will you hit second?"]
-               (ordered-list (map-monsters-with-index (partial second-double-swing-choice attack-fun)))))))))
+      (let [attack-result (attack-fun [(dec i) m])]
+        (if (monsters-dead)
+          (-> (redirect "/main") (assoc :flash (str attack-result "No monsters left alive")))
+          (response-html
+           (html [:p "Your double swing has a strength of " strength] [:p attack-result ". Which monster will you hit second?"]
+                 (ordered-list (map-monsters-with-index (partial second-double-swing-choice attack-fun))))))))))
 
 (def double-swing-link
-  (create-link "Double swing"
-               (fn [req]
-                 (let [[attack-strength attack-fun] (double-swing-attack)]
-                   (response-html
-                    (html [:p "Your double swing has a strength of "
-                           attack-strength ". Which monster will you hit first?"]
-                          (ordered-list
-                           (map-monsters-with-index (partial first-double-swing-choice attack-fun)))))))))
+  (create-link
+   "Double swing"
+   (fn [req]
+     (let [[attack-strength attack-fun] (double-swing-attack)]
+       (response-html
+        (html [:p "Your double swing has a strength of "
+               attack-strength ". Which monster will you hit first?"]
+              (ordered-list
+               (map-monsters-with-index
+                 (partial first-double-swing-choice attack-fun attack-strength)))))))))
 
 (defn show-actions-html []
   (html stab-link
@@ -90,7 +92,7 @@
 
 (defn render-game-html [req turn-number]
   (html4 [:body
-	  (if (:flash req) [:div#flash [:pre (:flash req)]])
+	  (if (:flash req) [:div#flash [:p (:flash req)]])
 	  [:div#player (show-player-html turn-number)]
 	  [:div#monsters (show-monsters-html)]
 	  [:div#actions (show-actions-html)]]))

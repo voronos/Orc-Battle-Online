@@ -1,4 +1,5 @@
-(ns orc_battle_online.game_logic)
+(ns orc_battle_online.game_logic
+  (:require clojure.string))
 
 (defmulti monster-hit (fn [i-m-pair amount] (:type (fnext i-m-pair))))
 (defmulti monster-show :type)
@@ -100,16 +101,16 @@
 	     (swap! *monsters* assoc-in [(first m) :health] new-hp))
 	   (let [new-m (get @*monsters* (first m))]
 	     (if (monster-dead new-m)
-	       (print "You killed the" (:type new-m) "! ")
-	       (print "You hit the" (:type new-m) ", knocking off" x "health points!"))))
+	       (str "You killed the " (:type new-m) "! ")
+	       (str "You hit the " (:type new-m) ", knocking off " x " health points!"))))
 
 (defmethod monster-hit 'hydra [m x]
 	   (let [new-hp (- (:health (fnext m)) x)]
 	     (swap! *monsters* assoc-in [(first m) :health] new-hp))
 	   (let [new-m (get @*monsters* (first m))]
 	     (if (monster-dead new-m)
-	       (print "The corpse of the fully decapitated and decapicated hydra falls to the floor!")
-	       (print "You lop off" x "of the hydra's heads! "))))
+	       (str "The corpse of the fully decapitated and decapicated hydra falls to the floor!")
+	       (str "You lop off " x " of the hydra's heads! "))))
 
 (defmethod monster-show :default [m] (print "A fierce" (:type m)) m)
 (defmethod monster-show 'orc [m] (print "A wicked orc with a level" (:club-level m) "club.") m)
@@ -159,9 +160,7 @@
      (fn [i-m-pair] (monster-hit i-m-pair attack-strength))]))
 
 (defn roundhouse-attack []
-  (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
-    (if-not (monsters-dead)
-      (monster-hit (random-monster) 1))))
+  (clojure.string/join "\n" (map (fn [x] (if-not (monsters-dead) (monster-hit (random-monster) 1))) (range (+ (randval (int (/ @*player-strength* 3))))))))
 
 (defn player-attack []
   (do
@@ -170,13 +169,13 @@
     (flush))
   (let [attack (read)]
     (do
-      (cond
-       (= 's attack) (stab-monster (pick-monster))
-       (= 'd attack) (let [[x attack-fun] (double-swing-attack)]
-                       (println "Your double swing has a strength of" x)
-                       (attack-fun (pick-monster))
-                       (if-not (monsters-dead) (attack-fun (pick-monster))))
-       true (roundhouse-attack))))
+      (print (cond
+              (= 's attack) (stab-monster (pick-monster))
+              (= 'd attack) (let [[x attack-fun] (double-swing-attack)]
+                              (println "Your double swing has a strength of" x)
+                              (println (attack-fun (pick-monster)))
+                              (if-not (monsters-dead) (attack-fun (pick-monster)) ""))
+              true (roundhouse-attack)))))
   (println))
 
 (defn game-loop []

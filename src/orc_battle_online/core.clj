@@ -11,10 +11,17 @@
 (defmulti handler :uri)
 
 (defmethod handler "/main" [req]
-	   (response-html (str (render-game-html req @*turn-counter*)
-			       (create-link "Random Fun"
-					    (fn [req]
-					      (response-html "Congrats! You have called a method"))))))
+  (let [newgame-link [:a {:href "/newgame"} "New Game?"]]
+      (if (monsters-dead)
+        (response-html (html [:p "Congratulations! You have defeated all the monsters!"]
+                             newgame-link))
+        (if (player-dead)
+          (response-html (html [:p "Too bad. You got slaughtered."]
+                               newgame-link))
+          (response-html (str (render-game-html req @*turn-counter*)
+                              (create-link "Random Fun"
+                                           (fn [req]
+                                             (response-html "Congrats! You have called a method")))))))))
 
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
