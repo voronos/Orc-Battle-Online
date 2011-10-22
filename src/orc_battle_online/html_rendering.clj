@@ -45,28 +45,30 @@
 		      (-> (redirect "/main")
 			  (assoc :flash output))))))
 
-(defn second-double-swing-choice [first-i m i]
+(defn second-double-swing-choice [attack-fun m i]
   (monster-show-with-attack m
     (fn [req]
-      (let [in-str (str "d\r\n" first-i "\r\n" i)]
-	(with-in-str in-str (player-attack))
-	(-> (redirect "/main")
-	    (assoc :flash in-str))))))
+      (attack-fun [(dec i) m])
+      (-> (redirect "/main")
+          (assoc :flash (str "You hit monster " i))))))
 
-(defn first-double-swing-choice [m i]
+(defn first-double-swing-choice [attack-fun m i]
   (monster-show-with-attack m
     (fn [req]
+      (attack-fun [(dec i) m])
       (response-html
-       (html [:p "Which monster will you hit second?"]
-	     (ordered-list (map-monsters-with-index (partial second-double-swing-choice i))))))))
+       (html [:p "You hit monster " i ". Which monster will you hit second?"]
+	     (ordered-list (map-monsters-with-index (partial second-double-swing-choice attack-fun))))))))
 
 (def double-swing-link
-     (create-link "Double swing"
-		  (fn [req]
-		    (response-html
-		     (html [:p "Which monster will you hit first?"]
-			   (ordered-list
-			    (map-monsters-with-index first-double-swing-choice)))))))
+  (create-link "Double swing"
+               (fn [req]
+                 (let [[attack-strength attack-fun] (double-swing-attack)]
+                   (response-html
+                    (html [:p "Your double swing has a strength of "
+                           attack-strength ". Which monster will you hit first?"]
+                          (ordered-list
+                           (map-monsters-with-index (partial first-double-swing-choice attack-fun)))))))))
 
 (defn show-actions-html []
   (html stab-link

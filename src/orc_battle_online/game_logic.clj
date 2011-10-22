@@ -156,7 +156,7 @@
 (defn double-swing-attack []
   (let [attack-strength (randval (int (/ @*player-strength* 6)))]
     [attack-strength
-     (fn [monster-num] (monster-hit (pick-monster-result monster-num) attack-strength))]))
+     (fn [i-m-pair] (monster-hit i-m-pair attack-strength))]))
 
 (defn player-attack []
   (do
@@ -169,7 +169,7 @@
        (= 's attack) (stab-monster (pick-monster))
        (= 'd attack) (let [[x attack-fun] (double-swing-attack)]
                        (println "Your double swing has a strength of" x)
-                       (attack-fun (pick-monster)) ;calling pick-monster here has interesting consequences when pick-monster-result is called later. What is the best way to get the monster num?
+                       (attack-fun (pick-monster))
                        (if-not (monsters-dead) (attack-fun (pick-monster))))
        true (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
 	      (if-not (monsters-dead)
