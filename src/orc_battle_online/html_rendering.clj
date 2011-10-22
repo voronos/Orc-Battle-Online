@@ -41,7 +41,7 @@
 (def roundhouse-link
      (create-link "Roundhouse"
 		  (fn [req]
-		    (let [output (with-out-str (with-in-str "r\r\n" (player-attack)))]
+		    (let [output (with-out-str (roundhouse-attack))]
 		      (-> (redirect "/main")
 			  (assoc :flash output))))))
 

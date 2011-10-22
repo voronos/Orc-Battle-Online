@@ -158,6 +158,11 @@
     [attack-strength
      (fn [i-m-pair] (monster-hit i-m-pair attack-strength))]))
 
+(defn roundhouse-attack []
+  (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
+    (if-not (monsters-dead)
+      (monster-hit (random-monster) 1))))
+
 (defn player-attack []
   (do
     (println)
@@ -171,9 +176,7 @@
                        (println "Your double swing has a strength of" x)
                        (attack-fun (pick-monster))
                        (if-not (monsters-dead) (attack-fun (pick-monster))))
-       true (dotimes [x (+ 1 (randval (int (/ @*player-strength* 3))))]
-	      (if-not (monsters-dead)
-		(monster-hit (random-monster) 1))))))
+       true (roundhouse-attack))))
   (println))
 
 (defn game-loop []
