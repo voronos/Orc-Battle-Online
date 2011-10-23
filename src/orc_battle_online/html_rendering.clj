@@ -36,18 +36,21 @@
                (fn [m i]
                  (monster-show-with-attack m
                    (fn [req]                             
+                     (swap! *turn-counter* inc)
                      (-> (redirect "/main")
                          (assoc :flash (stab-monster [(dec i) m])))))))))))))
 
 (def roundhouse-link
      (create-link "Roundhouse"
 		  (fn [req]
+                    (swap! *turn-counter* inc)
                     (-> (redirect "/main")
                         (assoc :flash (.replaceAll (roundhouse-attack) "\n" "<br/>"))))))
 
 (defn second-double-swing-choice [attack-fun m i]
   (monster-show-with-attack m
     (fn [req]
+      (swap! *turn-counter* inc)
       (let [attack-result (attack-fun [(dec i) m])]
         (-> (redirect "/main")
             (assoc :flash attack-result))))))

@@ -122,34 +122,35 @@
 (defmethod monster-attack :default [m])
 (defmethod monster-attack 'orc [m]
 	   (let [x (randval (:club-level m))]
-	     (print "An orc swings his club at you and knocks off" x)
-	     (print " of your health points. ")
-	     (swap! *player-health* - x)))
+	     (swap! *player-health* - x)
+             (str "An orc swings his club at you and knocks off " x
+                  " of your health points.")))
 
 (defmethod monster-attack 'hydra [m]
 	   (let [x (randval (bit-shift-left (:health m) -1))]
-	     (print "A hydra attacks you with" x "of its heads! It also grows back one more head!")
 	     (swap! *monsters* (fn [m-lst new-m]
 				 (assoc m-lst
 				   (some #(if (= (get m-lst %) m) %) (range (count m-lst))) new-m))
 		    (update-in m [:health] inc))
-	     (swap! *player-health* - x)))
+	     (swap! *player-health* - x)
+             (str "A hydra attacks you with " x " of its heads! It also grows back one more head!")))
 
 (defmethod monster-attack 'slime-mold [m]
-	   (let [x (randval (:sliminess m))]
-	     (print "A slime mold wraps around your legs and decreases your agility by" x)
-	     (print "! ")
-	     (swap! *player-agility* - x)
-	     (when (zero? (rand-int 2))
-	       (print "It also squirts in your face, taking away a health point! ")
-	       (swap! *player-health* dec))))
+  (let [x (randval (:sliminess m))
+        output (str "A slime mold wraps around your legs and decreases your agility by " x "!")]
+    (swap! *player-agility* - x)
+    (if (zero? (rand-int 2))
+      (do
+        (swap! *player-health* dec)
+        (str output " It also squirts in your face, taking away a health point! "))
+      output)))
 
 (defmethod monster-attack 'brigand [m]
-	   (let [x (max @*player-health* @*player-agility* @*player-strength*)]
-	     (cond
-	      (= x @*player-health*) (do (print "A brigand hits you with his slingshot, taking off 2 health points! ") (swap! *player-health* - 2))
-	      (= x @*player-agility*) (do (print "A brigand catches your leg with his whip, taking off 2 agility points! ") (swap! *player-agility* - 2))
-	      (= x @*player-strength*) (do (print "A brigand cuts your arm with his whip, taking off 2 strength points! ") (swap! *player-strength* - 2)))))
+  (let [x (max @*player-health* @*player-agility* @*player-strength*)]
+    (cond
+     (= x @*player-health*) (do (swap! *player-health* - 2) (str "A brigand hits you with his slingshot, taking off 2 health points! "))
+     (= x @*player-agility*) (do (swap! *player-agility* - 2) (str "A brigand catches your leg with his whip, taking off 2 agility points! "))
+     (= x @*player-strength*) (do (swap! *player-strength* - 2) (str "A brigand cuts your arm with his whip, taking off 2 strength points! ")))))
 
 (defn stab-monster [i-m-pair]
   (monster-hit i-m-pair (+ 2 (randval (bit-shift-left @*player-strength* -1)))))
@@ -188,7 +189,7 @@
     (println)
     (flush)
     (doseq [m @*monsters*]
-      (or (monster-dead m) (monster-attack m)))
+      (or (monster-dead m) (println (monster-attack m))))
     (recur)))
 
 ; TODO this needs quite a bit of rework to work well with Ring and not just the console

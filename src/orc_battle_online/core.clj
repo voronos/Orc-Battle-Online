@@ -26,21 +26,14 @@
 (defmethod handler "/newgame" [req]
 	   (init-monsters)
 	   (init-player)
-	   (reset! *turn-counter* 0)
+	   (reset! *turn-counter* 1)
 	   (redirect "/main"))
 
 (defmethod handler "/" [req]
 	   (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
 				[:a {:href "newgame"} "New Game"])))
-;;; TODO this is not quite
-;;; right. the turn should not
-;;; be incremented for each
-;;; link, only each complete
-;;; action
-;;;
 
 (defmethod handler :default [req]
-  (swap! *turn-counter* inc)
   (if (= 0 (mod @*turn-counter* 3))
     (doseq [m @*monsters*]
       (or (monster-dead m) (monster-attack m))))
