@@ -29,10 +29,11 @@
 (def *monster-num* 12)
 
 (defn init-monsters []
-  (swap! *monsters* (fn [_]
-		      (vec (map (fn [x]
-			     (apply (nth @*monster-builders* (rand-int (count @*monster-builders*))) []))
-			   (repeat *monster-num* 1))))))
+  (swap! *monsters*
+         (fn [_]
+           (vec (map (fn [x]
+                       (apply (nth @*monster-builders* (rand-int (count @*monster-builders*))) []))
+                     (repeat *monster-num* 1))))))
 				    
 
 (defn init-player []
@@ -97,43 +98,43 @@
     (pick-monster-result x)))
 
 (defmethod monster-hit :default [m x]
-	   (let [new-hp (- (:health (fnext m)) x)]
-	     (swap! *monsters* assoc-in [(first m) :health] new-hp))
-	   (let [new-m (get @*monsters* (first m))]
-	     (if (monster-dead new-m)
-	       (str "You killed the " (:type new-m) "! ")
-	       (str "You hit the " (:type new-m) ", knocking off " x " health points!"))))
+  (let [new-hp (- (:health (fnext m)) x)]
+    (swap! *monsters* assoc-in [(first m) :health] new-hp))
+  (let [new-m (get @*monsters* (first m))]
+    (if (monster-dead new-m)
+      (str "You killed the " (:type new-m) "! ")
+      (str "You hit the " (:type new-m) ", knocking off " x " health points!"))))
 
 (defmethod monster-hit 'hydra [m x]
-	   (let [new-hp (- (:health (fnext m)) x)]
-	     (swap! *monsters* assoc-in [(first m) :health] new-hp))
-	   (let [new-m (get @*monsters* (first m))]
-	     (if (monster-dead new-m)
-	       (str "The corpse of the fully decapitated and decapicated hydra falls to the floor!")
-	       (str "You lop off " x " of the hydra's heads! "))))
+  (let [new-hp (- (:health (fnext m)) x)]
+    (swap! *monsters* assoc-in [(first m) :health] new-hp))
+  (let [new-m (get @*monsters* (first m))]
+    (if (monster-dead new-m)
+      (str "The corpse of the fully decapitated and decapicated hydra falls to the floor!")
+      (str "You lop off " x " of the hydra's heads! "))))
 
 (defmethod monster-show :default [m] (print "A fierce" (:type m)) m)
 (defmethod monster-show 'orc [m] (print "A wicked orc with a level" (:club-level m) "club.") m)
 (defmethod monster-show 'hydra [m]
-	   (print "A malicious hydra with" (:health m) "heads.") m)
+  (print "A malicious hydra with" (:health m) "heads.") m)
 (defmethod monster-show 'slime-mold [m]
-	   (print "A slime mold with a sliminess of" (:sliminess m)))
+  (print "A slime mold with a sliminess of" (:sliminess m)))
 
 (defmethod monster-attack :default [m])
 (defmethod monster-attack 'orc [m]
-	   (let [x (randval (:club-level m))]
-	     (swap! *player-health* - x)
-             (str "An orc swings his club at you and knocks off " x
-                  " of your health points.")))
+  (let [x (randval (:club-level m))]
+    (swap! *player-health* - x)
+    (str "An orc swings his club at you and knocks off " x
+         " of your health points.")))
 
 (defmethod monster-attack 'hydra [m]
-	   (let [x (randval (bit-shift-left (:health m) -1))]
-	     (swap! *monsters* (fn [m-lst new-m]
-				 (assoc m-lst
-				   (some #(if (= (get m-lst %) m) %) (range (count m-lst))) new-m))
-		    (update-in m [:health] inc))
-	     (swap! *player-health* - x)
-             (str "A hydra attacks you with " x " of its heads! It also grows back one more head!")))
+  (let [x (randval (bit-shift-left (:health m) -1))]
+    (swap! *monsters* (fn [m-lst new-m]
+                        (assoc m-lst
+                          (some #(if (= (get m-lst %) m) %) (range (count m-lst))) new-m))
+           (update-in m [:health] inc))
+    (swap! *player-health* - x)
+    (str "A hydra attacks you with " x " of its heads! It also grows back one more head!")))
 
 (defmethod monster-attack 'slime-mold [m]
   (let [x (randval (:sliminess m))

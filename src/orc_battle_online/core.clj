@@ -12,32 +12,36 @@
 
 (defmethod handler "/main" [req]
   (let [newgame-link [:a {:href "/newgame"} "New Game?"]]
-      (if (monsters-dead)
-        (response-html (html [:p "Congratulations! You have defeated all the monsters!"]
+    (if (monsters-dead)
+      (response-html (html [:p (if (:flash req) [:div#flash [:p (:flash req)]])
+                            "Congratulations! You have defeated all the monsters!"]
+                           newgame-link))
+      (if (player-dead)
+        (response-html (html [:p (if (:flash req) [:div#flash [:p (:flash req)]])
+                              "Too bad. You got slaughtered."]
                              newgame-link))
-        (if (player-dead)
-          (response-html (html [:p "Too bad. You got slaughtered."]
-                               newgame-link))
-          (response-html (str (render-game-html req @*turn-counter*)
-                              (create-link "Random Fun"
-                                           (fn [req]
-                                             (response-html "Congrats! You have called a method")))))))))
+        (response-html (str (render-game-html req @*turn-counter*)))))))
 
 (defmethod handler "/newgame" [req]
-	   (init-monsters)
-	   (init-player)
-	   (reset! *turn-counter* 1)
-	   (redirect "/main"))
+  (init-monsters)
+  (init-player)
+  (reset! *turn-counter* 1)
+  (redirect "/main"))
 
 (defmethod handler "/" [req]
-	   (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
-				[:a {:href "newgame"} "New Game"])))
+  (response-html (html [:h1 "Hello World from Ring and Hiccup!"]
+                       [:a {:href "newgame"} "New Game"])))
+
+(defn apply-monster-attacks [monsters]
+  (clojure.string/join
+   "<br/>"
+   (filter (comp not true?) (map #(or (monster-dead %) (monster-attack %)) monsters))))
 
 (defmethod handler :default [req]
-  (if (= 0 (mod @*turn-counter* 3))
-    (doseq [m @*monsters*]
-      (or (monster-dead m) (monster-attack m))))
-  (follow-link req))
+  (let [resp (follow-link req)]
+    (if (= 0 (mod @*turn-counter* 3))
+      (update-in resp [:flash] str (apply-monster-attacks @*monsters*))
+      resp)))
 
 (def app (-> handler
 	     (wrap-flash)
