@@ -10,6 +10,22 @@
 
 (defmulti handler :uri)
 
+(defn main-handler [req]
+  ;; okay, so it looks like using a multimethod is not the best way to handle
+  ;; mapping requests with immutant. We need to define the routes in immutant.clj
+  ;; Also, using "/newgame" as a link href will go to the base url, rather than
+  ;; our current subset of desired operations
+  (let [newgame-link [:a {:href "/newgame"} "New Game?"]]
+    (if (monsters-dead)
+      (response-html (html [:p (if (:flash req) [:div#flash [:p (:flash req)]])
+                            "Congratulations! You have defeated all the monsters!"]
+                           newgame-link))
+      (if (player-dead)
+        (response-html (html [:p (if (:flash req) [:div#flash [:p (:flash req)]])
+                              "Too bad. You got slaughtered."]
+                             newgame-link))
+        (response-html (str (render-game-html req @*turn-counter*)))))))
+
 (defmethod handler "/main" [req]
   (let [newgame-link [:a {:href "/newgame"} "New Game?"]]
     (if (monsters-dead)
@@ -42,6 +58,9 @@
     (if (= 0 (mod @*turn-counter* 3))
       (update-in resp [:flash] str (apply-monster-attacks @*monsters*))
       resp)))
+
+(defn immutant-handler [request]
+  (handler request))
 
 (def app (-> handler
 	     (wrap-flash)
